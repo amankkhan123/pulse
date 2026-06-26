@@ -1,0 +1,15 @@
+## .NET build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+
+## IDE
+.vs/
+.idea/
+*.user
+
+## Local SQLite database
+*.db
+*.db-shm
+*.db-wal
