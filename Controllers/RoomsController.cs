@@ -37,8 +37,12 @@ public class RoomsController : Controller
         if (room == null)
             return View("RoomNotFound", code);
 
-        var pixels = await _db.Pixels.Where(p => p.RoomId == room.Id)
-            .Select(p => new { x = p.X, y = p.Y, color = p.Color }).ToListAsync();
+        var items = await _db.CanvasItems.Where(i => i.RoomId == room.Id).OrderBy(i => i.Id)
+            .Select(i => new
+            {
+                id = i.Id, kind = i.Kind, x = i.X, y = i.Y, width = i.Width, height = i.Height,
+                content = i.Content, color = i.Color, ownerName = i.OwnerName, ownerKey = i.OwnerKey
+            }).ToListAsync();
 
         var polls = await _db.Polls.Where(p => p.RoomId == room.Id).Include(p => p.Options)
             .Select(p => new
@@ -53,7 +57,7 @@ public class RoomsController : Controller
             .OrderByDescending(m => m.Upvotes).ThenByDescending(m => m.Id)
             .Select(m => new { id = m.Id, author = m.Author, text = m.Text, upvotes = m.Upvotes }).ToListAsync();
 
-        ViewData["InitialState"] = JsonSerializer.Serialize(new { pixels, polls, messages });
+        ViewData["InitialState"] = JsonSerializer.Serialize(new { items, polls, messages, board = new { w = 900, h = 560 } });
         return View(room);
     }
 

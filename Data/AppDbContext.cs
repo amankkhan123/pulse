@@ -10,7 +10,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Room> Rooms => Set<Room>();
-    public DbSet<Pixel> Pixels => Set<Pixel>();
+    public DbSet<CanvasItem> CanvasItems => Set<CanvasItem>();
     public DbSet<Poll> Polls => Set<Poll>();
     public DbSet<PollOption> PollOptions => Set<PollOption>();
     public DbSet<Vote> Votes => Set<Vote>();
