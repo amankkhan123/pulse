@@ -154,11 +154,11 @@ input[type=text]::placeholder, textarea::placeholder { color: var(--text-faint);
 /* ---- board ---- */
 .board-stage { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; min-height: 0; padding: 6px 0; }
 .board-frame { display: inline-flex; padding: 10px; background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 18px; box-shadow: 0 30px 70px -30px rgba(0, 0, 0, .9), 0 0 0 1px rgba(255, 176, 46, .05); }
-.board { position: relative; width: 900px; height: 560px; border-radius: 12px; overflow: hidden; background-color: #100c08; background-image: radial-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px); background-size: 26px 26px; }
+.board { position: relative; width: 900px; height: 560px; border-radius: 12px; overflow: visible; background-color: #100c08; background-image: radial-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px); background-size: 26px 26px; }
 .board.placing { cursor: crosshair; }
 
 .item { position: absolute; box-sizing: border-box; user-select: none; }
-.item-note { padding: 11px 13px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .8); }
+.item-note { padding: 11px 13px; border-radius: 8px; box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .8); }
 .note-text { font-family: var(--sans); font-size: 13px; font-weight: 500; line-height: 1.4; color: #221a10; white-space: pre-wrap; word-break: break-word; overflow: hidden; height: 100%; }
 .item-image { background: #fff; border-radius: 8px; padding: 4px; box-shadow: 0 12px 28px -12px rgba(0, 0, 0, .85); }
 .item-image img, .item-draw img { width: 100%; height: 100%; object-fit: contain; display: block; }
