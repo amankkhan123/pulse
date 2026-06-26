@@ -1,0 +1,69 @@
+@model Pulse.Models.Room
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div id="room" data-code="@Model.Code">
+    <header class="room-header">
+        <div class="room-id">
+            <span class="brand">Pulse</span>
+            <span class="room-name">@Model.Name</span>
+            <span class="room-code">@Model.Code</span>
+            <button type="button" id="copyLink" class="linkbtn">copy link</button>
+        </div>
+        <div class="room-right">
+            <span class="presence" title="">&#128101; <span id="presenceCount">1</span></span>
+            <input type="text" id="nameInput" maxlength="20" placeholder="your name" />
+            <div class="reactions">
+                <button type="button" data-emoji="&#128077;">&#128077;</button>
+                <button type="button" data-emoji="&#10084;&#65039;">&#10084;&#65039;</button>
+                <button type="button" data-emoji="&#128514;">&#128514;</button>
+                <button type="button" data-emoji="&#128293;">&#128293;</button>
+                <button type="button" data-emoji="&#127881;">&#127881;</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="room-grid">
+        <section class="panel canvas-panel">
+            <h2>Shared canvas</h2>
+            <div class="palette" id="palette"></div>
+            <div class="canvas-wrap">
+                <canvas id="canvas"></canvas>
+                <div id="cursors"></div>
+            </div>
+            <button type="button" id="exportBtn" class="btn">Export PNG</button>
+        </section>
+
+        <section class="panel polls-panel">
+            <h2>Polls</h2>
+            <details class="newpoll">
+                <summary>+ New poll</summary>
+                <input type="text" id="pollQuestion" placeholder="Question" maxlength="140" />
+                <input type="text" class="poll-opt" placeholder="Option 1" maxlength="60" />
+                <input type="text" class="poll-opt" placeholder="Option 2" maxlength="60" />
+                <input type="text" class="poll-opt" placeholder="Option 3 (optional)" maxlength="60" />
+                <input type="text" class="poll-opt" placeholder="Option 4 (optional)" maxlength="60" />
+                <button type="button" id="createPoll" class="btn primary">Launch poll</button>
+            </details>
+            <div id="polls"></div>
+        </section>
+
+        <section class="panel qa-panel">
+            <h2>Q &amp; A</h2>
+            <div class="qa-post">
+                <input type="text" id="qaInput" placeholder="Ask a question..." maxlength="280" />
+                <button type="button" id="qaSend" class="btn primary">Post</button>
+            </div>
+            <div id="messages"></div>
+        </section>
+    </main>
+
+    <div id="reactionLayer"></div>
+</div>
+
+@section Scripts {
+    <script src="~/js/signalr.min.js"></script>
+    <script id="initial-state" type="application/json">@Html.Raw(ViewData["InitialState"])</script>
+    <script src="~/js/pulse.js" asp-append-version="true"></script>
+}
