@@ -4,16 +4,100 @@
 }
 
 <div id="room" data-code="@Model.Code">
-    <header class="room-header">
-        <div class="room-id">
-            <span class="brand">Pulse</span>
+    <header class="rail">
+        <div class="rail-brand"><span class="brand">Pulse</span></div>
+        <div class="ticket">
+            <span class="ticket-label">Room</span>
             <span class="room-name">@Model.Name</span>
             <span class="room-code">@Model.Code</span>
             <button type="button" id="copyLink" class="linkbtn">copy link</button>
         </div>
-        <div class="room-right">
-            <span class="presence" title="">&#128101; <span id="presenceCount">1</span></span>
-            <input type="text" id="nameInput" maxlength="20" placeholder="your name" />
+        <div class="rail-status"><span class="live-dot"></span><span>Live</span></div>
+    </header>
+
+    <main class="stage-wrap">
+        <section class="stage">
+            <div class="sec-head"><span class="sec-no">01</span><h2>Collage board</h2><span class="sec-rule"></span></div>
+            <div class="board-toolbar">
+                <button type="button" class="tool" data-tool="note"><span class="tool-i">&#9633;</span> Note</button>
+                <button type="button" class="tool" data-tool="image"><span class="tool-i">&#8682;</span> Image</button>
+                <button type="button" class="tool" data-tool="draw"><span class="tool-i">&#9998;</span> Signature</button>
+                <button type="button" class="tool" data-tool="stamp"><span class="tool-i">&#9733;</span> Stamp</button>
+                <span class="toolbar-hint" id="boardHint">Pick a tool, then click an empty spot</span>
+            </div>
+            <div class="board-stage">
+                <div class="board-frame">
+                    <div class="board" id="board">
+                        <div id="items"></div>
+                        <div id="ghost" class="ghost" hidden></div>
+                        <div id="cursors"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="stage-tools">
+                <button type="button" id="exportBtn" class="btn ghost">Export PNG</button>
+                <span class="board-count"><span id="itemCount">0</span> items on the board</span>
+            </div>
+
+            <input type="file" id="imageInput" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+
+            <div class="composer" id="noteComposer" hidden>
+                <div class="composer-title">Sticky note</div>
+                <textarea id="noteText" maxlength="180" placeholder="Write something..."></textarea>
+                <div class="composer-colors" id="noteColors"></div>
+                <div class="composer-actions"><button type="button" class="linkbtn" data-cancel>cancel</button><button type="button" class="btn primary" id="noteAdd">Place note</button></div>
+            </div>
+            <div class="composer" id="drawComposer" hidden>
+                <div class="composer-title">Draw your signature</div>
+                <canvas id="sigPad" width="240" height="120"></canvas>
+                <div class="composer-actions"><button type="button" class="linkbtn" id="sigClear">clear</button><button type="button" class="linkbtn" data-cancel>cancel</button><button type="button" class="btn primary" id="sigUse">Place it</button></div>
+            </div>
+            <div class="composer" id="stampComposer" hidden>
+                <div class="composer-title">Pick a stamp</div>
+                <div class="stamp-grid" id="stampGrid"></div>
+                <div class="composer-actions"><button type="button" class="linkbtn" data-cancel>cancel</button></div>
+            </div>
+        </section>
+
+        <aside class="dock">
+            <nav class="dock-tabs">
+                <button type="button" class="dock-tab" data-tab="polls"><span class="dt-no">02</span><span>Polls</span><span class="tab-count" data-for="polls"></span></button>
+                <button type="button" class="dock-tab" data-tab="qa"><span class="dt-no">03</span><span>Q&amp;A</span><span class="tab-count" data-for="qa"></span></button>
+            </nav>
+            <div class="dock-body">
+                <section class="dock-pane pane-polls">
+                    <details class="newpoll">
+                        <summary>New poll</summary>
+                        <input type="text" id="pollQuestion" placeholder="Question" maxlength="140" />
+                        <input type="text" class="poll-opt" placeholder="Option 1" maxlength="60" />
+                        <input type="text" class="poll-opt" placeholder="Option 2" maxlength="60" />
+                        <input type="text" class="poll-opt" placeholder="Option 3 (optional)" maxlength="60" />
+                        <input type="text" class="poll-opt" placeholder="Option 4 (optional)" maxlength="60" />
+                        <button type="button" id="createPoll" class="btn primary">Launch poll</button>
+                    </details>
+                    <div id="polls"></div>
+                    <p class="pane-empty">No polls yet. Launch one above.</p>
+                </section>
+
+                <section class="dock-pane pane-qa">
+                    <div class="qa-post">
+                        <input type="text" id="qaInput" placeholder="Ask a question..." maxlength="280" />
+                        <button type="button" id="qaSend" class="btn primary">Post</button>
+                    </div>
+                    <div id="messages"></div>
+                    <p class="pane-empty">No questions yet. Be the first to ask.</p>
+                </section>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="counter">
+        <div class="counter-people">
+            <span class="presence" title=""><span class="live-dot"></span><span id="presenceCount">1</span><span class="presence-label">here</span></span>
+            <div class="avatars" id="presenceList"></div>
+        </div>
+        <div class="counter-me">
+            <label class="me-field"><span class="me-label">You</span><input type="text" id="nameInput" maxlength="20" placeholder="your name" /></label>
             <div class="reactions">
                 <button type="button" data-emoji="&#128077;">&#128077;</button>
                 <button type="button" data-emoji="&#10084;&#65039;">&#10084;&#65039;</button>
@@ -22,42 +106,7 @@
                 <button type="button" data-emoji="&#127881;">&#127881;</button>
             </div>
         </div>
-    </header>
-
-    <main class="room-grid">
-        <section class="panel canvas-panel">
-            <h2>Shared canvas</h2>
-            <div class="palette" id="palette"></div>
-            <div class="canvas-wrap">
-                <canvas id="canvas"></canvas>
-                <div id="cursors"></div>
-            </div>
-            <button type="button" id="exportBtn" class="btn">Export PNG</button>
-        </section>
-
-        <section class="panel polls-panel">
-            <h2>Polls</h2>
-            <details class="newpoll">
-                <summary>+ New poll</summary>
-                <input type="text" id="pollQuestion" placeholder="Question" maxlength="140" />
-                <input type="text" class="poll-opt" placeholder="Option 1" maxlength="60" />
-                <input type="text" class="poll-opt" placeholder="Option 2" maxlength="60" />
-                <input type="text" class="poll-opt" placeholder="Option 3 (optional)" maxlength="60" />
-                <input type="text" class="poll-opt" placeholder="Option 4 (optional)" maxlength="60" />
-                <button type="button" id="createPoll" class="btn primary">Launch poll</button>
-            </details>
-            <div id="polls"></div>
-        </section>
-
-        <section class="panel qa-panel">
-            <h2>Q &amp; A</h2>
-            <div class="qa-post">
-                <input type="text" id="qaInput" placeholder="Ask a question..." maxlength="280" />
-                <button type="button" id="qaSend" class="btn primary">Post</button>
-            </div>
-            <div id="messages"></div>
-        </section>
-    </main>
+    </footer>
 
     <div id="reactionLayer"></div>
 </div>
