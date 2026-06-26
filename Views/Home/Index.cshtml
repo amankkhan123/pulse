@@ -3,20 +3,38 @@
 }
 
 <div class="landing">
-    <h1>Pulse</h1>
-    <p class="muted">A live room where everyone draws, votes, asks, and reacts together &mdash; in real time.</p>
+    <div class="landing-head">
+        <p class="kicker">Real&#8209;time &middot; together &middot; no refresh</p>
+        <h1 class="wordmark">Pulse</h1>
+        <p class="lede">One live room where everyone draws on a shared canvas, runs polls, asks questions and reacts &mdash; all at the same time, as it happens.</p>
+    </div>
 
     <div class="cards">
         <form asp-controller="Rooms" asp-action="Create" method="post" class="card">
-            <h2>Start a room</h2>
-            <input type="text" name="name" placeholder="Room name (e.g. Class Demo)" maxlength="60" autofocus />
+            <div class="sec-head"><span class="sec-no">01</span><h2>Start a room</h2><span class="sec-rule"></span></div>
+            <label class="field">
+                <span class="field-label">Room name</span>
+                <input type="text" name="name" placeholder="e.g. Class Demo" maxlength="60" autofocus />
+            </label>
             <button type="submit" class="btn primary">Create room</button>
         </form>
 
         <form asp-controller="Rooms" asp-action="Join" method="post" class="card">
-            <h2>Join a room</h2>
-            <input type="text" name="code" placeholder="Room code (e.g. ABCDE)" maxlength="5" style="text-transform:uppercase" />
+            <div class="sec-head"><span class="sec-no">02</span><h2>Join a room</h2><span class="sec-rule"></span></div>
+            <label class="field">
+                <span class="field-label">Room code</span>
+                <input type="text" name="code" class="code-input" placeholder="ABCDE" maxlength="5" />
+            </label>
             <button type="submit" class="btn">Join</button>
         </form>
     </div>
+
+    <ul class="ledger">
+        <li><span class="lg-no">01</span><span class="lg-t">Shared canvas</span><span class="lg-d">place pixels together &mdash; the artwork forms live</span></li>
+        <li><span class="lg-no">02</span><span class="lg-t">Live polls</span><span class="lg-d">launch a question, the vote bars move for everyone</span></li>
+        <li><span class="lg-no">03</span><span class="lg-t">Q &amp; A</span><span class="lg-d">post, upvote, and the list re&#8209;sorts itself</span></li>
+        <li><span class="lg-no">04</span><span class="lg-t">Presence &amp; cursors</span><span class="lg-d">see who&rsquo;s here and where their cursor is</span></li>
+    </ul>
+
+    <p class="foot-note">Open a room, share the code, watch it move.</p>
 </div>
