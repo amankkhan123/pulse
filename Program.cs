@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Pulse.Data;
+using Pulse.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
@@ -28,5 +30,6 @@ app.UseRouting();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapHub<PulseHub>("/pulsehub");
 
 app.Run();
