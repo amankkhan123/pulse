@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="landing">
+    <h1>Pulse</h1>
+    <p class="muted">A live room where everyone draws, votes, asks, and reacts together &mdash; in real time.</p>
+
+    <div class="cards">
+        <form asp-controller="Rooms" asp-action="Create" method="post" class="card">
+            <h2>Start a room</h2>
+            <input type="text" name="name" placeholder="Room name (e.g. Class Demo)" maxlength="60" autofocus />
+            <button type="submit" class="btn primary">Create room</button>
+        </form>
+
+        <form asp-controller="Rooms" asp-action="Join" method="post" class="card">
+            <h2>Join a room</h2>
+            <input type="text" name="code" placeholder="Room code (e.g. ABCDE)" maxlength="5" style="text-transform:uppercase" />
+            <button type="submit" class="btn">Join</button>
+        </form>
+    </div>
+</div>

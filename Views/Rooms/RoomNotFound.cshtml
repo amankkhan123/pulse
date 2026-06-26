@@ -1,0 +1,10 @@
+@model string
+@{
+    ViewData["Title"] = "Room not found";
+}
+
+<div class="landing">
+    <h1>Room not found</h1>
+    <p class="muted">There&rsquo;s no room with code <strong>@Model</strong>. Check the code or start a new room.</p>
+    <a class="btn primary" asp-controller="Home" asp-action="Index">Back home</a>
+</div>
