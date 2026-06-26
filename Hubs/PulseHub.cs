@@ -12,6 +12,25 @@ public class PulseHub : Hub
     // connectionId -> (room code, display name). Lives for the process; presence only.
     private static readonly ConcurrentDictionary<string, (string Room, string Name)> Connections = new();
 
+    // connectionId -> last placement time, for a light anti-spam cooldown.
+    private static readonly ConcurrentDictionary<string, DateTime> LastPlace = new();
+
+    // The board is a fixed coordinate space; every client matches these.
+    private const double BoardW = 900, BoardH = 560, Gap = 8, MinSize = 20, MaxSize = 360;
+    private const int PlaceCooldownMs = 450;
+    private static readonly string[] AllowedKinds = { "note", "image", "draw", "stamp" };
+
+    // Axis-aligned overlap test with a small gap so items never touch.
+    private static bool Overlaps(CanvasItem a, double x, double y, double w, double h)
+        => !(a.X + a.Width + Gap <= x || x + w + Gap <= a.X
+          || a.Y + a.Height + Gap <= y || y + h + Gap <= a.Y);
+
+    private static object Payload(CanvasItem i) => new
+    {
+        id = i.Id, kind = i.Kind, x = i.X, y = i.Y, width = i.Width, height = i.Height,
+        content = i.Content, color = i.Color, ownerName = i.OwnerName, ownerKey = i.OwnerKey
+    };
+
     private readonly AppDbContext _db;
     public PulseHub(AppDbContext db) => _db = db;
 
@@ -25,25 +44,113 @@ public class PulseHub : Hub
         await BroadcastPresence(roomCode);
     }
 
-    public async Task PlacePixel(string roomCode, int x, int y, string color)
+    // Place a new element. Server-authoritative: validates size/bounds/content,
+    // enforces the cooldown, and rejects anything that would overlap (first-claim-wins).
+    public async Task PlaceItem(string roomCode, string ownerKey, string kind,
+        double x, double y, double width, double height, string content, string color)
     {
         var room = await _db.Rooms.FirstOrDefaultAsync(r => r.Code == roomCode);
         if (room == null) return;
 
-        var px = await _db.Pixels.FirstOrDefaultAsync(p => p.RoomId == room.Id && p.X == x && p.Y == y);
-        if (px == null)
+        var now = DateTime.UtcNow;
+        if (LastPlace.TryGetValue(Context.ConnectionId, out var last)
+            && (now - last).TotalMilliseconds < PlaceCooldownMs)
         {
-            _db.Pixels.Add(new Pixel { RoomId = room.Id, X = x, Y = y, Color = color, ByName = MyName, At = DateTime.UtcNow });
+            await Clients.Caller.SendAsync("ItemRejected", new { reason = "One moment — placing too fast." });
+            return;
         }
-        else
-        {
-            px.Color = color;
-            px.ByName = MyName;
-            px.At = DateTime.UtcNow;
-        }
-        await _db.SaveChangesAsync();
 
-        await Clients.Group(roomCode).SendAsync("PixelPlaced", x, y, color, MyName);
+        kind = (kind ?? "").Trim().ToLowerInvariant();
+        if (Array.IndexOf(AllowedKinds, kind) < 0) return;
+        if (width < MinSize || height < MinSize || width > MaxSize || height > MaxSize) return;
+
+        content ??= "";
+        if (kind == "note")
+        {
+            content = content.Trim();
+            if (content.Length == 0) return;
+            if (content.Length > 180) content = content[..180];
+        }
+        else if (kind == "stamp")
+        {
+            if (content.Length == 0 || content.Length > 16) return;
+        }
+        else // image | draw -> data URL
+        {
+            if (!content.StartsWith("data:image/")) return;
+            if (content.Length > 400_000)
+            {
+                await Clients.Caller.SendAsync("ItemRejected", new { reason = "Image is too large." });
+                return;
+            }
+        }
+
+        color = string.IsNullOrWhiteSpace(color) ? "#f5eee2" : color.Trim();
+        if (color.Length > 9) color = color[..9];
+
+        // Keep the element fully inside the board.
+        x = Math.Clamp(x, 0, Math.Max(0, BoardW - width));
+        y = Math.Clamp(y, 0, Math.Max(0, BoardH - height));
+
+        var existing = await _db.CanvasItems.Where(i => i.RoomId == room.Id).ToListAsync();
+        if (existing.Any(a => Overlaps(a, x, y, width, height)))
+        {
+            await Clients.Caller.SendAsync("ItemRejected", new { reason = "That spot's taken — try an empty area." });
+            return;
+        }
+
+        var item = new CanvasItem
+        {
+            RoomId = room.Id, Kind = kind, X = x, Y = y, Width = width, Height = height,
+            Content = content, Color = color, OwnerKey = ownerKey ?? "", OwnerName = MyName, CreatedAt = now
+        };
+        _db.CanvasItems.Add(item);
+        await _db.SaveChangesAsync();
+        LastPlace[Context.ConnectionId] = now;
+
+        await Clients.Group(roomCode).SendAsync("ItemPlaced", Payload(item));
+    }
+
+    // Move an element you own. Re-validates bounds and overlap against everything else.
+    public async Task MoveItem(int itemId, string ownerKey, double x, double y)
+    {
+        var item = await _db.CanvasItems.FindAsync(itemId);
+        if (item == null) return;
+        var room = await _db.Rooms.FindAsync(item.RoomId);
+        if (room == null) return;
+
+        if (item.OwnerKey != (ownerKey ?? ""))
+        {
+            await Clients.Caller.SendAsync("ItemRejected", new { reason = "Only the owner can move this.", id = item.Id, x = item.X, y = item.Y });
+            return;
+        }
+
+        x = Math.Clamp(x, 0, Math.Max(0, BoardW - item.Width));
+        y = Math.Clamp(y, 0, Math.Max(0, BoardH - item.Height));
+
+        var others = await _db.CanvasItems.Where(i => i.RoomId == item.RoomId && i.Id != item.Id).ToListAsync();
+        if (others.Any(a => Overlaps(a, x, y, item.Width, item.Height)))
+        {
+            await Clients.Caller.SendAsync("ItemRejected", new { reason = "Can't drop there — it overlaps.", id = item.Id, x = item.X, y = item.Y });
+            return;
+        }
+
+        item.X = x; item.Y = y;
+        await _db.SaveChangesAsync();
+        await Clients.Group(room.Code).SendAsync("ItemMoved", item.Id, item.X, item.Y);
+    }
+
+    // Delete an element you own.
+    public async Task RemoveItem(int itemId, string ownerKey)
+    {
+        var item = await _db.CanvasItems.FindAsync(itemId);
+        if (item == null) return;
+        if (item.OwnerKey != (ownerKey ?? "")) return;
+
+        var room = await _db.Rooms.FindAsync(item.RoomId);
+        _db.CanvasItems.Remove(item);
+        await _db.SaveChangesAsync();
+        if (room != null) await Clients.Group(room.Code).SendAsync("ItemRemoved", itemId);
     }
 
     public async Task PostMessage(string roomCode, string text)
